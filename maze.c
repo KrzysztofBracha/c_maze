@@ -1,6 +1,5 @@
 #include <ncurses.h>
 #include <stdbool.h> // bool type
-#include <time.h> // random
 #include <unistd.h> // sleep
 // -std=c99
 
@@ -29,6 +28,8 @@ void check_right (int arr_y, int arr_x, int *right, bool *b_right);
 void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool b_right, int up, int down, int left, int right);
 void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x);
 int arr[10][10];
+
+void info (int arr_y, int arr_x, int  up, int down, int left, int right, bool b_up, bool b_right);
 
 int main() {
 	int x, y, arr_x, arr_y;
@@ -238,7 +239,7 @@ void write_build_mode (bool *build_mode) {
 	attrset(COLOR_PAIR(4));
 	move(21, 60);
 	if (*build_mode == true)
-        	printw("Build mode: ON");
+        	printw("Build mode: ON\t");
 	else
 		printw("Build mode: OFF");
 }
@@ -254,17 +255,34 @@ void run_escape (int *y, int *x, int *arr_y, int *arr_x) {
         *y = 24;
         *arr_x = 2;
         *arr_y = 9;
+	draw_path(*y, *x, 5);
+	info(*arr_y, *arr_x, up, down, left, right, b_up, b_right);
 	while (run == true) {
-		move(13, 60);
-                printw("value of arr_X: %d\t\t", *arr_x);
-                move(14, 60);
-                printw("value of arr_y: %d\t\t", *arr_y);
-
-		sleep(3);
+		info(*arr_y, *arr_x, up, down, left, right, b_up, b_right);
+		sleep(1);
 		check_directions (*arr_y, *arr_x, &b_up, &b_down, &b_left, &b_right, &up, &down, &left, &right);
 		choose_direction (&direction, b_up, b_down, b_left, b_right, up, down, left, right);
 		move_to_direction (direction, y, x, arr_y, arr_x);
 	}
+}
+
+void info (int arr_y, int arr_x, int  up, int down, int left, int right, bool b_up, bool b_right) {
+	move(12, 60);
+        printw("value of up: %d\t\t", up);
+        move(13, 60);
+        printw("value of arr_X: %d\t\t", arr_x);
+        move(14, 60);
+        printw("value of arr_y: %d\t\t", arr_y);
+	move(15, 60);
+	printw("value of down: %d\t\t", down);
+	move(16, 60);
+	printw("value of down: %d\t\t", arr[arr_x][++arr_y]);
+	move(17, 60);
+        printw("bool up: %d\t\t", b_up);
+	move(18, 60);
+        printw("bool right: %d\t\t", b_right);
+
+
 }
 
 void check_directions (int arr_y, int arr_x, bool *b_up, bool *b_down, bool *b_left, bool *b_right, int *up, int *down, int *left, int *right) {
@@ -275,29 +293,25 @@ void check_directions (int arr_y, int arr_x, bool *b_up, bool *b_down, bool *b_l
 }
 
 void check_up (int arr_y, int arr_x, int *up, bool *b_up) {
-	if (arr_y > 0) {
-		if (arr[--arr_y][arr_x] > -1) {
-              		*up = arr[--arr_y][arr_x];
-              		*b_up = true;
-		} else {
-			*b_up = false;
-		}
+	if ((arr_y > 0) && (arr[--arr_y][arr_x] > -1)) {
+       		*up = arr[--arr_y][arr_x];
+              	*b_up = true;
         } else {
               *b_up = false;
         }
 }
 
 void check_down (int arr_y, int arr_x, int *down, bool *b_down) {
-	if (arr_y < 9) {
-              *down = arr[++arr_y][arr_x];
-              *b_down = true;
+	if ((arr_y < 9) && (arr[++arr_y][arr_x] > -1)) {
+		*down = arr[++arr_y][arr_x];
+                *b_down = true;
         } else {
               *b_down = false;
         }
 }
 
 void check_left (int arr_y, int arr_x, int *left, bool *b_left) {
-	if (arr_x > 0) {
+	if ((arr_x > 0) && (arr[arr_y][--arr_x] > -1)) {
               *left = arr[arr_y][--arr_x];
               *b_left = true;
         } else {
@@ -306,7 +320,7 @@ void check_left (int arr_y, int arr_x, int *left, bool *b_left) {
 }
 
 void check_right (int arr_y, int arr_x, int *right, bool *b_right) {
-	if (arr_x < 9) {
+	if ((arr_x < 9) && (arr[arr_y][++arr_x] > -1)) {
               *right = arr[arr_y][++arr_x];
               *b_right = true;
         } else {
@@ -322,17 +336,17 @@ void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool
 		value = up;
 		chose = true;
 	}
-	if ((b_right == true) && ((right > value) || (chose == false))) {
+	if ((b_right == true) && ((right < value) || (chose == false))) {
 		*direction = 3;
 		value = right;
 		chose = true;
 	}
-	if ((b_left == true) && ((left > value) || (chose == false))) {
+	if ((b_left == true) && ((left < value) || (chose == false))) {
 		*direction = 2;
 		value = left;
 		chose = true;
 	}
-	if ((b_down == true) && ((down > value) || (chose == false))) {
+	if ((b_down == true) && ((down < value) || (chose == false))) {
 		*direction = 1;
 	}
 }
@@ -344,13 +358,14 @@ void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x) {
 			move_up (y, *x, arr_y, *arr_x, false, &built, 5);
 			break;
 		case 1:
-			move_right (*y, x, *arr_y, arr_x, false, &built, 5);
+			move_down (y, *x, arr_y, *arr_x, false, &built, 5);
 			break;
 		case 2:
 			move_left (*y, x, *arr_y, arr_x, false, &built, 5);
 			break;
 		case 3:
-			move_down (y, *x, arr_y, *arr_x, false, &built, 5);
+			move_right (*y, x, *arr_y, arr_x, false, &built, 5);
 			break;
 	}
+	++arr[*arr_y][*arr_x];
 }
