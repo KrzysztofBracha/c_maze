@@ -4,39 +4,38 @@
 // -std=c99
 
 void init_ncurses (void);
-void init (int *x, int *y, int *arr_x, int *arr_y, bool *built, bool *build_mode);
+void init (int *x, int *y, int *arr_x, int *arr_y, bool *built, bool *build_mode, bool *run);
 void draw_board (void);
-void control (int *y, int *x, int *arr_y, int *arr_x, bool *built, bool *build_mode);
+void control (int *y, int *x, int *arr_y, int *arr_x, bool *built, bool *build_mode, bool *run);
 void draw_path (int y, int x, int color);
-void clear_path (int y, int x, int arr_y, int arr_x, bool *built);
+void draw_row (void);
+void clear_path (int y, int x, int arr_y, int arr_x, bool *built, bool run);
 void build_path (int y, int x, int arr_y, int arr_x, bool *built);
 void delete_path (int y, int x, int arr_y, int arr_x, bool *built);
-void move_up (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color);
-void move_down (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color);
-void move_right (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color);
-void move_left (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color);
+void move_up (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color, bool run);
+void move_down (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color, bool run);
+void move_right (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color, bool run);
+void move_left (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color, bool run);
 void init_arr (void);
 void write_info (void);
 void change_build_mode (bool *build_mode);
 void write_build_mode (bool *build_mode);
-void run_escape (int *y, int *x, int *arr_y, int *arr_x);
+void run_escape (int *y, int *x, int *arr_y, int *arr_x, bool *run);
 void check_directions (int arr_y, int arr_x, bool *b_up, bool *b_down, bool *b_left, bool *b_right, int *up, int *down, int *left, int *right);
 void check_up (int arr_y,int arr_x, int *up, bool *b_up);
 void check_down (int arr_y, int arr_x, int *down, bool *b_down);
 void check_left (int arr_y, int arr_x, int *left, bool *b_left);
 void check_right (int arr_y, int arr_x, int *right, bool *b_right);
 void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool b_right, int up, int down, int left, int right);
-void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x);
+void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x, bool run);
 int arr[10][10];
-
-void info (int arr_y, int arr_x, int  up, int down, int left, int right, bool b_up, bool b_right);
 
 int main() {
 	int x, y, arr_x, arr_y;
-	bool built, build_mode;
+	bool built, build_mode, run;
 	init_ncurses();
-	init (&x, &y, &arr_x, &arr_y, &built, &build_mode);
-	control (&y, &x, &arr_y, &arr_x, &built, &build_mode);
+	init (&x, &y, &arr_x, &arr_y, &built, &build_mode, &run);
+	control (&y, &x, &arr_y, &arr_x, &built, &build_mode, &run);
 
     	endwin();                  // zakończenie tryby curses
 	return 0;
@@ -50,16 +49,17 @@ void init_ncurses(void) {
         clear();
         curs_set(0);
         start_color();
-        init_pair(1, COLOR_BLUE, COLOR_WHITE);
-        init_pair(2, COLOR_RED, COLOR_WHITE);
-        init_pair(3, COLOR_YELLOW, COLOR_WHITE);
+        init_pair(1, COLOR_BLUE, COLOR_WHITE); // maze color
+        init_pair(2, COLOR_RED, COLOR_WHITE); // cursor color
+        init_pair(3, COLOR_YELLOW, COLOR_WHITE); // path color
         init_pair(4, COLOR_WHITE, COLOR_BLACK);
-	init_pair(5, COLOR_WHITE, COLOR_CYAN);
+	init_pair(5, COLOR_CYAN, COLOR_WHITE); // run color 
 }
 
-void init (int *x, int *y, int *arr_x, int *arr_y, bool *built, bool *build_mode) {
+void init (int *x, int *y, int *arr_x, int *arr_y, bool *built, bool *build_mode, bool *run) {
         *built = true;
         *build_mode = false;
+	*run = false;
         *x = 18;
         *y = 24;
         *arr_x = 2;
@@ -104,21 +104,21 @@ void write_info (void) {
 		addch(ACS_HLINE);
 }
 
-void control (int *y, int *x, int *arr_y, int *arr_x, bool *built, bool *build_mode) {
+void control (int *y, int *x, int *arr_y, int *arr_x, bool *built, bool *build_mode, bool *run) {
 	int key;
 	while ((key = getch()) != 'q') {
                 switch (key) {
                         case (KEY_UP):
-                                move_up (y, *x, arr_y, *arr_x, *build_mode, built, 2);
+                                move_up (y, *x, arr_y, *arr_x, *build_mode, built, 2, *run);
                                 break;
                         case (KEY_DOWN):
-                                move_down (y, *x, arr_y, *arr_x, *build_mode, built, 2);
+                                move_down (y, *x, arr_y, *arr_x, *build_mode, built, 2, *run);
                                 break;
                         case (KEY_RIGHT):
-                                move_right (*y, x, *arr_y, arr_x, *build_mode, built, 2);
+                                move_right (*y, x, *arr_y, arr_x, *build_mode, built, 2, *run);
                                 break;
                         case (KEY_LEFT):
-                               move_left (*y, x, *arr_y, arr_x, *build_mode, built, 2);
+                               move_left (*y, x, *arr_y, arr_x, *build_mode, built, 2, *run);
                                 break;
                         case (' '):
                                 build_path (*y, *x, *arr_y, *arr_x, built);
@@ -130,54 +130,48 @@ void control (int *y, int *x, int *arr_y, int *arr_x, bool *built, bool *build_m
                                 delete_path(*y, *x, *arr_y, *arr_x, built);
                                 break;
 			case ('r'):
-				run_escape (y, x, arr_x, arr_y);
+				*run = true;
+				run_escape (y, x, arr_x, arr_y, run);
 				break;
                 }
         }
 
 }
 
-void clear_path (int y, int x, int arr_y, int arr_x, bool *built) {
+void clear_path (int y, int x, int arr_y, int arr_x, bool *built, bool run) {
 	if (*built == false) {
-		if (arr[arr_y][arr_x] == 0)
-			draw_path(y, x, 3);
-                else
+		if (run == false)
 			draw_path(y, x, 1);
+                else
+			draw_path(y, x, 3);
        	} else
 		*built = false;
-	// todo
-        move(y, x);
-        printw("%d", arr[arr_y][arr_x]);
-
 }
 
-void draw_path(int y, int x, int color) {
+void draw_path (int y, int x, int color) {
 	move(y, x);
 	attrset(COLOR_PAIR(color));
-	for (int i=0; i<4; ++i)
-		addch(ACS_CKBOARD);
+	draw_row();
         move(--y, x);
-	for (int i=0; i<4; ++i)
-        	addch(ACS_CKBOARD);
+	draw_row();
 	move(--y, x);
 	refresh();
 }
 
-void build_path(int y, int x, int arr_y, int arr_x, bool *built) {
+void draw_row (void) {
+	for (int i=0; i<4; ++i)
+        	addch(ACS_CKBOARD);
+}
+
+void build_path (int y, int x, int arr_y, int arr_x, bool *built) {
 	draw_path(y, x, 3);
         *built = true;
         arr[arr_y][arr_x] = 0;
-	// todo
-	move(y, x);
-        printw("%d", arr[arr_y][arr_x]);
 }
 
 void delete_path(int y, int x, int arr_y, int arr_x, bool *built) {
 	arr[arr_y][arr_x] = -1;
 	*built = false;
-	// todo
-        move(y, x);
-        printw("%d", arr[arr_y][arr_x]);
 }
 
 void init_arr(void) {
@@ -186,44 +180,44 @@ void init_arr(void) {
 			arr[i][j] = -1;
 }
 
-void move_up (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color) {
+void move_up (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color, bool run) {
 	if (*y > 6) {
         	if (build_mode == true)
                 	build_path(*y, x, *arr_y, arr_x, built);
-                clear_path(*y, x, *arr_y, arr_x, built);
+                clear_path(*y, x, *arr_y, arr_x, built, run);
                 (*y) -= 2;
                 draw_path(*y, x, color);
                 --(*arr_y);
 	}
 }
 
-void move_down (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color) {
+void move_down (int *y, int x, int *arr_y, int arr_x, bool build_mode, bool *built, int color, bool run) {
 	if (*y < 24) {
         	if (build_mode == true)
                 	build_path(*y, x, *arr_y, arr_x, built);
-                clear_path(*y, x, *arr_y, arr_x, built);
+                clear_path(*y, x, *arr_y, arr_x, built, run);
                 (*y) += 2;
                 draw_path(*y, x, color);
                	++(*arr_y);
 	}
 }
 
-void move_right (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color) {
+void move_right (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color, bool run) {
 	if (*x < 46) {
         	if (build_mode == true)
                 	build_path(y, *x, arr_y, *arr_x, built);
-                clear_path(y, *x, arr_y, *arr_x, built);
+                clear_path(y, *x, arr_y, *arr_x, built, run);
                 (*x) += 4;
                 draw_path(y, *x, color);
                 ++(*arr_x);
 	}
 }
 
-void move_left (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color) {
+void move_left (int y, int *x, int arr_y, int *arr_x, bool build_mode, bool *built, int color, bool run) {
 	if (*x > 12) {
         	if (build_mode == true)
                 	build_path(y, *x, arr_y, *arr_x, built);
-                clear_path(y, *x, arr_y, *arr_x, built);
+                clear_path(y, *x, arr_y, *arr_x, built, run);
                 (*x) -= 4;
                 draw_path(y, *x, color);
                 --(*arr_x);
@@ -244,45 +238,21 @@ void write_build_mode (bool *build_mode) {
 		printw("Build mode: OFF");
 }
 
-void run_escape (int *y, int *x, int *arr_y, int *arr_x) {
-	move(15, 60);
-        printw("program ran");
+void run_escape (int *y, int *x, int *arr_y, int *arr_x, bool *run) {
 	int up, down, left, right;
 	bool b_up, b_down, b_left, b_right;
-	bool run = true;
 	int direction; // up = 0, down = 1, left = 2, right = 3
 	*x = 18;
         *y = 24;
         *arr_x = 2;
         *arr_y = 9;
 	draw_path(*y, *x, 5);
-	info(*arr_y, *arr_x, up, down, left, right, b_up, b_right);
-	while (run == true) {
-		info(*arr_y, *arr_x, up, down, left, right, b_up, b_right);
+	while (*run == true) {
 		sleep(1);
 		check_directions (*arr_y, *arr_x, &b_up, &b_down, &b_left, &b_right, &up, &down, &left, &right);
 		choose_direction (&direction, b_up, b_down, b_left, b_right, up, down, left, right);
-		move_to_direction (direction, y, x, arr_y, arr_x);
+		move_to_direction (direction, y, x, arr_y, arr_x, *run);
 	}
-}
-
-void info (int arr_y, int arr_x, int  up, int down, int left, int right, bool b_up, bool b_right) {
-	move(12, 60);
-        printw("value of up: %d\t\t", up);
-        move(13, 60);
-        printw("value of arr_X: %d\t\t", arr_x);
-        move(14, 60);
-        printw("value of arr_y: %d\t\t", arr_y);
-	move(15, 60);
-	printw("value of down: %d\t\t", down);
-	move(16, 60);
-	printw("value of down: %d\t\t", arr[arr_x][++arr_y]);
-	move(17, 60);
-        printw("bool up: %d\t\t", b_up);
-	move(18, 60);
-        printw("bool right: %d\t\t", b_right);
-
-
 }
 
 void check_directions (int arr_y, int arr_x, bool *b_up, bool *b_down, bool *b_left, bool *b_right, int *up, int *down, int *left, int *right) {
@@ -293,8 +263,8 @@ void check_directions (int arr_y, int arr_x, bool *b_up, bool *b_down, bool *b_l
 }
 
 void check_up (int arr_y, int arr_x, int *up, bool *b_up) {
-	if ((arr_y > 0) && (arr[--arr_y][arr_x] > -1)) {
-       		*up = arr[--arr_y][arr_x];
+	if ((arr_y > 0) && (arr[arr_y-1][arr_x] > -1)) {
+       		*up = arr[arr_y-1][arr_x];
               	*b_up = true;
         } else {
               *b_up = false;
@@ -302,8 +272,8 @@ void check_up (int arr_y, int arr_x, int *up, bool *b_up) {
 }
 
 void check_down (int arr_y, int arr_x, int *down, bool *b_down) {
-	if ((arr_y < 9) && (arr[++arr_y][arr_x] > -1)) {
-		*down = arr[++arr_y][arr_x];
+	if ((arr_y < 9) && (arr[arr_y+1][arr_x] > -1)) {
+		*down = arr[arr_y+1][arr_x];
                 *b_down = true;
         } else {
               *b_down = false;
@@ -311,8 +281,8 @@ void check_down (int arr_y, int arr_x, int *down, bool *b_down) {
 }
 
 void check_left (int arr_y, int arr_x, int *left, bool *b_left) {
-	if ((arr_x > 0) && (arr[arr_y][--arr_x] > -1)) {
-              *left = arr[arr_y][--arr_x];
+	if ((arr_x > 0) && (arr[arr_y][arr_x-1] > -1)) {
+              *left = arr[arr_y][arr_x-1];
               *b_left = true;
         } else {
               *b_left = false;
@@ -320,8 +290,8 @@ void check_left (int arr_y, int arr_x, int *left, bool *b_left) {
 }
 
 void check_right (int arr_y, int arr_x, int *right, bool *b_right) {
-	if ((arr_x < 9) && (arr[arr_y][++arr_x] > -1)) {
-              *right = arr[arr_y][++arr_x];
+	if ((arr_x < 9) && (arr[arr_y][arr_x+1] > -1)) {
+              *right = arr[arr_y][arr_x+1];
               *b_right = true;
         } else {
               *b_right = false;
@@ -351,21 +321,21 @@ void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool
 	}
 }
 
-void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x) {
+void move_to_direction (int direction, int *y, int *x, int *arr_y, int *arr_x, bool run) {
 	bool built = false;
 	switch (direction) {
 		case 0:
-			move_up (y, *x, arr_y, *arr_x, false, &built, 5);
+			move_up (y, *x, arr_y, *arr_x, false, &built, 5, run);
 			break;
 		case 1:
-			move_down (y, *x, arr_y, *arr_x, false, &built, 5);
+			move_down (y, *x, arr_y, *arr_x, false, &built, 5, run);
 			break;
 		case 2:
-			move_left (*y, x, *arr_y, arr_x, false, &built, 5);
+			move_left (*y, x, *arr_y, arr_x, false, &built, 5, run);
 			break;
 		case 3:
-			move_right (*y, x, *arr_y, arr_x, false, &built, 5);
+			move_right (*y, x, *arr_y, arr_x, false, &built, 5, run);
 			break;
 	}
-	++arr[*arr_y][*arr_x];
+	++(arr[*arr_y][*arr_x]);
 }
