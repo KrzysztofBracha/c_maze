@@ -15,8 +15,13 @@ struct Directions {
 	short int left;
 	short int right;
 };
-//bool b_up, b_down, b_left, b_right;
 
+struct b_Directions {
+	bool b_up;
+	bool b_down;
+	bool b_left;
+	bool b_right; 
+};
 
 void init_ncurses (void);
 void init (struct Coords *view_coords, struct Coords *arr_coords, bool *built, bool *build_mode, bool *run);
@@ -36,19 +41,18 @@ void write_info (void);
 void change_build_mode (bool *build_mode);
 void write_build_mode (bool *build_mode);
 void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *run);
-void check_directions (struct Coords *arr_coords, bool *b_up, bool *b_down, bool *b_left, bool *b_right, struct Directions *directions);
+void check_directions (struct Coords *arr_coords, struct b_Directions *b_directions, struct Directions *directions);
 void check_up (struct Coords *arr_coords, short int *up, bool *b_up);
 void check_down (struct Coords *arr_coords, short int *down, bool *b_down);
 void check_left (struct Coords *arr_coords, short int *left, bool *b_left);
 void check_right (struct Coords *arr_coords, short int *right, bool *b_right);
-void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool b_right, struct Directions *directions);
+void choose_direction (int *direction, struct b_Directions *b_directions, struct Directions *directions);
 void move_to_direction (int direction, struct Coords *view_coords, struct Coords *arr_coords, bool run);
 short int arr[10][10];
 
 int main() {
 	struct Coords view_coords;
 	struct Coords arr_coords;
-	// int arr_x, arr_y;
 	bool built, build_mode, run;
 	init_ncurses();
 	init (&view_coords, &arr_coords, &built, &build_mode, &run);
@@ -257,9 +261,8 @@ void write_build_mode (bool *build_mode) {
 }
 
 void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *run) {
-	//int up, down, left, right;
 	struct Directions directions;
-	bool b_up, b_down, b_left, b_right;
+	struct b_Directions b_directions;
 	int direction; // up = 0, down = 1, left = 2, right = 3
 	view_coords->x = 18;
         view_coords->y = 24;
@@ -268,17 +271,17 @@ void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *ru
 	draw_path(view_coords, 5);
 	while (*run == true) {
 		sleep(1);
-		check_directions (arr_coords, &b_up, &b_down, &b_left, &b_right, &directions);
-		choose_direction (&direction, b_up, b_down, b_left, b_right, &directions);
+		check_directions (arr_coords, &b_directions, &directions);
+		choose_direction (&direction, &b_directions, &directions);
 		move_to_direction (direction, view_coords, arr_coords, *run);
 	}
 }
 
-void check_directions (struct Coords *arr_coords, bool *b_up, bool *b_down, bool *b_left, bool *b_right, struct Directions *directions) {
-        check_up (arr_coords, &(directions->up), b_up);
-	check_down (arr_coords, &(directions->down), b_down);
-	check_left (arr_coords, &(directions->left), b_left);
-	check_right (arr_coords, &(directions->right), b_right);
+void check_directions (struct Coords *arr_coords, struct b_Directions *b_directions, struct Directions *directions) {
+        check_up (arr_coords, &(directions->up), &(b_directions->b_up));
+	check_down (arr_coords, &(directions->down), &(b_directions->b_down));
+	check_left (arr_coords, &(directions->left), &(b_directions->b_left));
+	check_right (arr_coords, &(directions->right), &(b_directions->b_right));
 }
 
 void check_up (struct Coords *arr_coords, short int *up, bool *b_up) {
@@ -317,25 +320,25 @@ void check_right (struct Coords *arr_coords, short int *right, bool *b_right) {
         }
 }
 
-void choose_direction (int *direction, bool b_up, bool b_down, bool b_left, bool b_right, struct Directions *directions) {
+void choose_direction (int *direction, struct b_Directions *b_directions, struct Directions *directions) {
 	int value;
 	bool chose = false;
-	if (b_up == true) {
+	if (b_directions->b_up == true) {
 		*direction = 0;
 		value = directions->up;
 		chose = true;
 	}
-	if ((b_right == true) && ((directions->right < value) || (chose == false))) {
+	if ((b_directions->b_right == true) && ((directions->right < value) || (chose == false))) {
 		*direction = 3;
 		value = directions->right;
 		chose = true;
 	}
-	if ((b_left == true) && ((directions->left < value) || (chose == false))) {
+	if ((b_directions->b_left == true) && ((directions->left < value) || (chose == false))) {
 		*direction = 2;
 		value = directions->left;
 		chose = true;
 	}
-	if ((b_down == true) && ((directions->down < value) || (chose == false))) {
+	if ((b_directions->b_down == true) && ((directions->down < value) || (chose == false))) {
 		*direction = 1;
 	}
 }
