@@ -2,4 +2,4 @@
 
 Program that allows user to build a maze. 
 
-Written in C using ncurses library.
+Written in C using ncurses library and C99 standard.

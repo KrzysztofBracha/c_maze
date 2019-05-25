@@ -20,7 +20,7 @@ struct b_Directions {
 	bool b_up;
 	bool b_down;
 	bool b_left;
-	bool b_right; 
+	bool b_right;
 };
 
 void init_ncurses (void);
@@ -41,6 +41,7 @@ void write_info (void);
 void change_build_mode (bool *build_mode);
 void write_build_mode (bool *build_mode);
 void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *run);
+void write_run_info (void);
 void check_directions (struct Coords *arr_coords, struct b_Directions *b_directions, struct Directions *directions);
 void check_up (struct Coords *arr_coords, short int *up, bool *b_up);
 void check_down (struct Coords *arr_coords, short int *down, bool *b_down);
@@ -48,6 +49,7 @@ void check_left (struct Coords *arr_coords, short int *left, bool *b_left);
 void check_right (struct Coords *arr_coords, short int *right, bool *b_right);
 void choose_direction (int *direction, struct b_Directions *b_directions, struct Directions *directions);
 void move_to_direction (int direction, struct Coords *view_coords, struct Coords *arr_coords, bool run);
+void check_end (struct Coords *arr_coords, bool *end);
 short int arr[10][10];
 
 int main() {
@@ -264,17 +266,36 @@ void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *ru
 	struct Directions directions;
 	struct b_Directions b_directions;
 	int direction; // up = 0, down = 1, left = 2, right = 3
+	bool end = false;
 	view_coords->x = 18;
         view_coords->y = 24;
         arr_coords->x = 2;
         arr_coords->y = 9;
 	draw_path(view_coords, 5);
-	while (*run == true) {
+	write_run_info();
+	while (end == false) {
 		sleep(1);
 		check_directions (arr_coords, &b_directions, &directions);
 		choose_direction (&direction, &b_directions, &directions);
 		move_to_direction (direction, view_coords, arr_coords, *run);
+		check_end (arr_coords, &end);
 	}
+}
+
+void write_run_info (void) {
+	attrset(COLOR_PAIR(4));
+	int y = 5;
+	move(y, 60);
+        printw("PROGRAM RUN");
+	move(y+=2, 60);
+	printw("MOVES: 0\t\t\t\t\t");
+	move(y+=2, 60);
+	printw("PRESS Q TO QUIT\t");
+	for (int i=0; i<7; ++i) {
+		move(y+=2, 60);
+		printw("\t\t\t\t\t\t");
+	}
+	refresh();
 }
 
 void check_directions (struct Coords *arr_coords, struct b_Directions *b_directions, struct Directions *directions) {
@@ -360,4 +381,10 @@ void move_to_direction (int direction, struct Coords *view_coords, struct Coords
 			break;
 	}
 	++(arr[arr_coords->y][arr_coords->x]);
+}
+
+void check_end (struct Coords *arr_coords, bool *end) {
+	if ((arr_coords->y == 0) && (arr_coords->x == 7)) {
+		*end = true;
+	}
 }
