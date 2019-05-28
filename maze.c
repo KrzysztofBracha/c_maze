@@ -1,6 +1,6 @@
 #include <ncurses.h>
-#include <stdbool.h> // bool type
-#include <unistd.h> // sleep
+#include <stdbool.h>
+#include <unistd.h> //sleep()
 // -std=c99
 
 struct Coords {
@@ -28,7 +28,7 @@ void draw_board (void);
 void build_control (struct Coords *view_coords, struct Coords *arr_coords, bool *built, bool *build_mode, bool *run);
 void draw_path (struct Coords *view_coords, int color);
 void draw_row (void);
-bool clear_path (struct Coords *view_coords, bool built, bool run);
+bool clear_path (struct Coords *view_coords, struct Coords *arr_coords, bool built, bool run);
 bool build_path (struct Coords *view_coords, struct Coords *arr_coords, bool built);
 bool delete_path (struct Coords *arr_coords, bool built);
 void move_up (struct Coords *view_coords,  struct Coords *arr_coords, bool build_mode, bool *built, int color, bool run);
@@ -40,7 +40,9 @@ void write_info (void);
 bool change_build_mode (bool build_mode);
 void write_build_mode (bool build_mode);
 void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *run);
+int kbhit(void);
 void init_escape (struct Coords *view_coords, struct Coords *arr_coords);
+void prepare_view (struct Coords *view_coords, struct Coords *arr_coords);
 void write_run_info (void);
 unsigned short int write_moves (unsigned short int moves);
 void check_directions (struct Coords *arr_coords, struct b_Directions *b_directions, struct Directions *directions);
@@ -171,9 +173,9 @@ void build_control (struct Coords *view_coords, struct Coords *arr_coords, bool 
 
 }
 
-bool clear_path (struct Coords *view_coords, bool built, bool run) {
+bool clear_path (struct Coords *view_coords, struct Coords *arr_coords, bool built, bool run) {
 	if (built == false) {
-		if (run == false)
+		if ((run == false) && (arr[arr_coords->y][arr_coords->x] == 0))
 			draw_path(view_coords, 1);
                 else
 			draw_path(view_coords, 3);
@@ -222,7 +224,7 @@ void move_up (struct Coords *view_coords, struct Coords *arr_coords, bool build_
 	if (view_coords->y > 6) {
         	if (build_mode == true)
                 	*built = build_path(view_coords, arr_coords, *built);
-                *built = clear_path(view_coords, *built, run);
+                *built = clear_path(view_coords, arr_coords, *built, run);
                 view_coords->y -= 2;
                 draw_path(view_coords, color);
                 --(arr_coords->y);
@@ -233,7 +235,7 @@ void move_down (struct Coords *view_coords, struct Coords *arr_coords, bool buil
 	if (view_coords->y < 24) {
         	if (build_mode == true)
                 	*built = build_path(view_coords, arr_coords, *built);
-                *built = clear_path(view_coords, *built, run);
+                *built = clear_path(view_coords, arr_coords, *built, run);
                 view_coords->y += 2;
                 draw_path(view_coords, color);
                	++(arr_coords->y);
@@ -244,7 +246,7 @@ void move_right (struct Coords *view_coords, struct Coords *arr_coords, bool bui
 	if (view_coords->x < 46) {
         	if (build_mode == true)
                 	*built = build_path(view_coords, arr_coords, *built);
-                *built = clear_path(view_coords, *built, run);
+                *built = clear_path(view_coords, arr_coords, *built, run);
                 view_coords->x += 4;
                 draw_path(view_coords, color);
                 ++(arr_coords->x);
@@ -255,7 +257,7 @@ void move_left (struct Coords *view_coords, struct Coords *arr_coords, bool buil
 	if (view_coords->x > 12) {
         	if (build_mode == true)
                 	*built = build_path(view_coords, arr_coords, *built);
-                *built = clear_path(view_coords, *built, run);
+                *built = clear_path(view_coords, arr_coords, *built, run);
                 view_coords->x -= 4;
                 draw_path(view_coords, color);
                 --(arr_coords->x);
@@ -277,38 +279,54 @@ void write_build_mode (bool build_mode) {
 		printw("Build mode: OFF");
 }
 
+int kbhit(void) {
+	int ch = getch();
+	if (ch != ERR) {
+		ungetch(ch);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 void run_escape (struct Coords *view_coords, struct Coords *arr_coords, bool *run) {
 	struct Directions directions;
 	struct b_Directions b_directions;
 	short int direction; // up = 0, down = 1, left = 2, right = 3
 	bool b_finish = false;
 	unsigned short int moves = 0;
-	//int key;
+	nodelay(stdscr, TRUE);
 	init_escape (view_coords, arr_coords);
 	while (b_finish == false) {
-		//write_coords(arr_coords);
-
-		move(11, 60);
-                printw("Bool right: %s", b_directions.b_right ? "true" : "false");
-		move(13, 60);
-		printw("Direction: %d", direction);
-		refresh();
 		sleep(1);
 		check_directions (arr_coords, &b_directions, &directions);
 		direction = choose_direction (&b_directions, &directions);
 		move_to_direction (direction, view_coords, arr_coords, *run);
 		b_finish = check_finish (arr_coords, b_finish);
 		moves = write_moves(moves);
+		if (kbhit()) {
+			if (getch() == 'q')
+				break;
+		}
 	}
 }
 
 void init_escape (struct Coords *view_coords, struct Coords *arr_coords) {
+	prepare_view(view_coords, arr_coords);
 	view_coords->x = 18;
         view_coords->y = 24;
         arr_coords->x = 2;
         arr_coords->y = 9;
         draw_path(view_coords, 5);
         write_run_info();
+}
+
+void prepare_view (struct Coords *view_coords, struct Coords *arr_coords) {
+	if (arr[arr_coords->x][arr_coords->y] == 0) {
+		draw_path (view_coords, 1);
+	} else {
+		draw_path (view_coords, 3);
+	}
 }
 
 void write_run_info (void) {
